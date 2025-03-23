@@ -1,0 +1,32 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <title>Chess@UOA!</title>
+  <link rel="stylesheet" href="css/chessboard-1.0.0.min.css" />
+  <script src="js/jquery-3.7.1.min.js"></script>
+  <script src="js/chessboard-1.0.0.min.js"></script>
+  <script src="js/chess.js"></script>
+  <script src="js/main.js"></script>
+</head>
+<body>
+<h1>Chess@UOA!</h1>
+<div id="game">
+  <div id="gameOptions">
+    <select id="white">
+      <option value="engine">Engine</option>
+      <option value="random">Random</option>
+      <option value="human">Human</option>
+    </select>
+    <select id="black">
+      <option value="random">Random</option>
+      <option value="engine">Engine</option>
+      <option value="human">Human</option>
+    </select>
+    <button id="startBtn" onclick="startGame('board')">Start Game</button>
+  </div>
+  <div id="board" style="width: 500px; float: inline-start"></div>
+</div>
+</body>
+</html>
