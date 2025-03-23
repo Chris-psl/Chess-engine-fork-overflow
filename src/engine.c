@@ -1,3 +1,15 @@
+/**
+ * @file engine.c
+ * @brief Chess engine implementation for choosing the best move using minimax evaluation.
+ *
+ * This file contains the implementation of a chess engine that evaluates and chooses the best move
+ * from a given list of legal moves using the minimax algorithm. The engine reads the board position
+ * in Forsyth-Edwards Notation (FEN), generates legal moves, and evaluates them to select the optimal move.
+ *
+ */
+
+
+ int main(int argc, char * argv[]);
  #include <stdio.h>
  #include <stdlib.h>
  #include <stdarg.h>
@@ -15,13 +27,7 @@
  ./engine "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" \
  "a3 a4 b3 b4 c3 c4 d3 d4 e3 e4 f3 f4 g3 g4 h3 h4 Na3 Nc3 Nf3 Nh3" \
  3
-
- make WEB_TARGET=web/engine.wasm web/engine.wasm
-
- $ make run
-python3 -m http.server --directory web
-Serving HTTP on 0.0.0.0 port 8000 (http://0.0.0.0:8000/) ...
-
+ hello
  */
  
  /**

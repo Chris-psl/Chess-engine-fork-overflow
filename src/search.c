@@ -17,10 +17,7 @@ void clearEnPassant(Board board) {
 }
 
 int enemyPiece(Board board, int square) {
-    int start = (board->toMove == 'w') ? 6 : 0;
-    int end = start + 6;
-    
-    for (int i = start; i < end; i++) {
+    for (int i = 6; i < 12; i++) {
         if (IS_BIT_SET(board->bitboards[i], square)) {
             return 1;
         }
@@ -31,62 +28,54 @@ int enemyPiece(Board board, int square) {
 // Quiescence search function
 double quiescence(Board board, double alpha, double beta) {
     // Evaluate the current position
-    double stand_pat = evaluateBitboard(board);
+    double stand_pat = evaluateBitboard(board->bitboards, board->toMove, board->fullmove);
 
-    // Fail-high beta cutoff
+    // If the current evaluation is better than beta, return beta (fail-high)
     if (stand_pat >= beta) {
         return beta;
     }
 
-    // Update alpha if stand_pat is better
+    // Update alpha if the current evaluation is better than alpha
     if (stand_pat > alpha) {
         alpha = stand_pat;
     }
 
-    // Generate capture moves only
-    int moveCount;
-    char *legalCaptures = generateLegalCaptures(board);
-    if (legalCaptures == NULL) return alpha; // Return alpha instead of 0
+        // Generate only capture moves for quiescence search
+        int moveCount;
 
-    char **moves = initMoveSave(legalCaptures, &moveCount);
-    free(legalCaptures); // Free the string containing moves
-    if (moves == NULL) return alpha;
+        char *legalCaptures = generateLegalCaptures(board);
+        if(legalCaptures == NULL) return 0;
 
-    for (int i = 0; i < moveCount; i++) {
+        char **moves = initMoveSave(legalCaptures, &moveCount);
+        for (int i = 0; i < moveCount; i++) {
+            
+        // Calculate the destination squares
         short int dst = (moves[i][3] - '1') * 8 + (moves[i][2] - 'a');
 
-        // Check if move is a valid capture (including en passant)
-        if (enemyPiece(board, dst)) {
-            // Create new board state
+        // Check if the move is a capture
+        if (enemyPiece(board, dst) == 1) { // Not empty and not our piece
+            // Create a new board state and apply the move
             Board newBoard = malloc(sizeof(struct board));
-            if (!newBoard) {
-                freeMoveSave(moves, moveCount);
-                return alpha;
-            }
-
             memcpy(newBoard, board, sizeof(struct board));
             UpdateBitboards(newBoard, moves[i]);
 
-            // Recursive quiescence search
+            // Recursively evaluate the move
             double eval = -quiescence(newBoard, -beta, -alpha);
-            free(newBoard); // Free allocated board
+            //free(newBoard);
 
-            // Fail-hard beta cutoff
+            // Update alpha and check for cutoffs
             if (eval >= beta) {
-                freeMoveSave(moves, moveCount);
-                return beta;
+                //freeMoveSave(moves, moveCount);
+                return beta; // Fail-high
             }
-
             if (eval > alpha) {
                 alpha = eval;
             }
         }
     }
-
-    freeMoveSave(moves, moveCount);
-    return alpha;
+    //freeMoveSave(moves, moveCount);
+    return alpha; // Return the best score found
 }
-
 
 // Minimax function with alpha-beta pruning and quiescence search
 double minimax(Board board, int depth, double alpha, double beta, bool maximizingPlayer) {
@@ -111,8 +100,8 @@ double minimax(Board board, int depth, double alpha, double beta, bool maximizin
 
     if (depth == 0) {
         freeMoveSave(moves, moveCount); // Ensure moves is freed
-        //return evaluateBitboard(board);
-        return quiescence(board, alpha, beta);
+        return evaluateBitboard(board->bitboards, board->toMove, board->fullmove);
+        //return quiescence(board, alpha, beta);
     }
 
     double bestEval = maximizingPlayer ? -1e9 : 1e9;
