@@ -7,6 +7,9 @@
 #include "init.h"
 #include "evaluate.h"
 
+// Piece values
+int pieceValues[12] = {P_VALUE, N_VALUE, B_VALUE, R_VALUE, Q_VALUE, K_VALUE, -P_VALUE, -N_VALUE, -B_VALUE, -R_VALUE, -Q_VALUE, -K_VALUE};
+
 // Piece-square tables (example values, can be tuned)
 const int pawn_table[64] = {
     0,  0,  0,  0,  0,  0,  0,  0,
@@ -86,8 +89,13 @@ const int king_table_endgame[64] = {
 };
 
 // returns piece index or -1 if the square is empty
+// returns piece index or -1 if the square is empty
 int whatPiece(unsigned long long bitboards[12], short int sqr) {
     int piece;
+
+    // check if a square is within bounds
+    if (sqr < 0 || sqr > 63) return -1;
+
     for (piece = 0; piece < 12; piece++) {
         if (IS_BIT_SET(bitboards[piece], sqr)) return piece;
     }
@@ -296,6 +304,107 @@ int setGameState(Board board){
 }
 
 
+// Returns the value the enemy piece that claim a square
+int evaluatePieceSquare(Board board, int square, int player){
+    int score = 0;
+
+    if (player == -1){
+        for (int piece = 6; piece < 12; piece++) {
+            if(piece == BLACK_KNIGHTS) continue;
+            if (IS_BIT_SET(board->bitboards[piece], square)) {
+                score += pieceValues[piece];
+            }
+        }
+    } else if(player == 1){ 
+        for (int piece = 0; piece < 6; piece++) {
+            if(piece == WHITE_KNIGHTS) continue;
+            if (IS_BIT_SET(board->bitboards[piece], square)) {
+                score -= pieceValues[piece];
+            }
+        }
+    }  
+    return score;
+}
+
+// Function that returns the first vertical or horizontal square that is occupied by a piece
+int getSquare(Board board, int square, int direction){
+    int Square = square + direction;
+    while (Square >= 0 && Square < 64) {
+        if (whatPiece(board->bitboards, Square) != -1) {
+            return Square;
+        }
+        Square += direction;
+    }
+    return -1;
+}
+
+// Function that returns the amount of knights that threaten a square 
+// A knight on a best case scenario claims 8 possible squares
+int getKnightThreats(Board board, int square){
+    int threats = 0;
+    int player = (board->toMove == 'w') ? 1 : -1;
+
+    int directions[8] = {6, 10, 15, 17, -6, -10, -15, -17};
+    for(int i = 0; i < 8; i++){
+        if(whatPiece(board->bitboards, square + directions[i]) == player * WHITE_KNIGHTS){
+            threats++;
+        }
+    }
+
+    return threats;
+}
+
+// Function that returns the value of the vertical and horizontal threats to a square
+int getThreats(Board board){
+    int score = 0;
+    int knightThreats = 0;
+    int directions[8] = {1, -1, 8, -8, 7, -7, 9, -9};
+
+    for (int square = 0; square < 64; square++) {
+        knightThreats = getKnightThreats(board, square);
+        for(int i = 0; i < 8; i++){
+            int Square = getSquare(board, square, directions[i]);
+            if(Square != -1){
+                score += evaluatePieceSquare(board, Square, -1);
+            }
+        }
+    }
+
+    score -= knightThreats*10;
+
+    return score;
+}
+
+// Function that calculates the value of the pieces that guard a square
+int getDefenders(Board board){
+    int score = 0;
+    int player = (board->toMove == 'w') ? 1 : -1;
+    int directions[8] = {1, -1, 8, -8, 7, -7, 9, -9};
+
+    for (int square = 0; square < 64; square++) {
+        for(int i = 0; i < 8; i++){
+            int Square = getSquare(board, square, directions[i]);
+            if(Square != -1){
+                score += evaluatePieceSquare(board, Square, 1);
+            }
+        }
+        score += evaluatePieceSquare(board, square, player);
+    }
+
+    return score;
+}
+
+// Function that calculates the value of the pieces that attack a square
+// And defends the square along with the value of the piece on it
+int evaluateSquare(Board board){
+    int score = 0;
+
+    score += getThreats(board);
+    score += getDefenders(board);
+
+    return score;
+}
+
 // Evaluate the board score from the perspective of the current player
 int evaluateBitboard(Board board) {
     int score = 0;
@@ -312,8 +421,8 @@ int evaluateBitboard(Board board) {
     // Evaluate the pawn structures
     score += evaluatePawnStructures(board);
     
-    // Attacked squares penalty
-    // (This requires a separate function to calculate attacked squares)
+    // Attacked squares penalty currently working on it
+    //score += evaluateSquare(board);
 
     return score;
 }
