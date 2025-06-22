@@ -24,21 +24,27 @@ void move_piece(unsigned long long bitboards[12], char piece, char file, char ra
 // Function to update the bitboard with a single movee
 void UpdateBitboards(Board board, char *move);
 
-// Helper functions for the move function  
+// Handle castling moves 
 void handleKingsideCastling(Board board);
 void handleQueensideCastling(Board board);
+
+// Square management
 int calculateSquareIndex(char file, char rank);
 void emptySquare(unsigned long long *bitboards, char file, char rank);
 void updateMove(int piece, unsigned long long *bitboards, char file, char rank);
 
-// Helper function for bitboard visualization
+// Functions to aid visualization and debugging
 void printBitboard(unsigned long long *bitboards, int piece);
 void fprintBitToFen(FILE *stream, Board board);
 void printBoard(Board board);
 
 // Function to delete a single moves trail
 void DeletePrevious(int piece, unsigned long long *bitboards, char sFile, char sRank, char dFile, char dRank);
+
+// Finds the piece to move based on the source file and rank
 int possiblePiece(unsigned long long *bitboards, char sFile, char sRank, int sSquare, int piece);
+
+// Finds the index of the piece at a given square
 int whatPieceBit(unsigned long long bitboards[12], int sqr);
 int pieceIndex(char p);
 

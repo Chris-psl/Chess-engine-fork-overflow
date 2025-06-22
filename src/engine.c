@@ -90,7 +90,7 @@ Serving HTTP on 0.0.0.0 port 8000 (http://0.0.0.0:8000/) ...
          // Update the temp board with the possible move.
          UpdateBitboards(tempBoard, choices[i]);
         
-         int depth = 4;
+         int depth =10;
          //if (timeout <= 1) depth = 1;
          // Get the value given by this move.
          currentVal = minimax(tempBoard, depth, -1e9, 1e9, true);

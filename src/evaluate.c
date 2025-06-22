@@ -9,12 +9,13 @@
 
 /*
 Active player == 1 for 'w' and -1 for 'b'.
+Produces negative values for black and positive values for white.
 */
 
 // Piece values
 int pieceValues[12] = {P_VALUE, N_VALUE, B_VALUE, R_VALUE, Q_VALUE, K_VALUE, -P_VALUE, -N_VALUE, -B_VALUE, -R_VALUE, -Q_VALUE, -K_VALUE};
 
-// Piece-square tables (example values, can be tuned)
+//------------- Piece-square tables ------------------
 const int pawn_table[64] = {
     0,  0,  0,  0,  0,  0,  0,  0,
     5, 10, 10,-20,-20, 10, 10,  5,
@@ -91,6 +92,7 @@ const int king_table_endgame[64] = {
     -30,-30,  0,  0,  0,  0,-30,-30,
     -50,-30,-30,-30,-30,-30,-30,-50
 };
+// ---------------------------------------------------
 
 // returns piece index or -1 if the square is empty
 // Else return the index of the piece (0-11 in this case)
@@ -106,6 +108,7 @@ int whatPiece(unsigned long long bitboards[12], short int sqr) {
     return -1;
 }
 
+
 // returns the square of the king of the asked player
 short int getKingSquare(unsigned long long bitboards[12], char usPlayer) {
     if (usPlayer == 'w') {
@@ -114,6 +117,7 @@ short int getKingSquare(unsigned long long bitboards[12], char usPlayer) {
         return __builtin_ctzll(bitboards[BLACK_KING]); // Black king's position
     }
 }
+
 
 // Evaluate the position based on material balance
 int evaluateMaterial(Board board){
@@ -202,6 +206,8 @@ int evaluateMaterial(Board board){
 //         return score;
 // }
 
+
+// Evaluate the position based on piece-square tables
 int evaluatePosition(Board board, int gameState) {
     int score = 0;
 
@@ -223,7 +229,8 @@ int evaluatePosition(Board board, int gameState) {
 }
 
 
-// Check if a pawn is isolated
+// Check if a pawn is isolated, aka it does not have any friendly pawns on adjacent files
+// Returns 1 if isolated, 0 otherwise
 int isBackwardPawn(unsigned long long pawnBitboard, int square, char color) {
     int file = square % 8;
     int rank = square / 8;
@@ -242,6 +249,7 @@ int isBackwardPawn(unsigned long long pawnBitboard, int square, char color) {
     
     return !ahead; // Return true (1) if no supporting pawns, false (0) otherwise.
 }
+
 
 // Evaluate the pawn structure based on pawn support
 int PawnSupport(Board board){
@@ -270,7 +278,9 @@ int PawnSupport(Board board){
     return score;
 }
 
-// Check if a pawn is isolated
+
+// Check if a pawn is isolated, aka it does not have any friendly pawns on adjacent files
+// Returns 1 if isolated, 0 otherwise
 int evaluatePawnStructures(Board board){
     int score = 0;
     int player = (board->toMove == 'w') ? 1 : -1;
@@ -302,6 +312,7 @@ int evaluatePawnStructures(Board board){
 
 
 // Returns the gamestate based on the current board
+// 0 = opening, 1 = middlegame, 2 = endgame
 int setGameState(Board board){
     
     // Get the king's square
@@ -329,29 +340,8 @@ int setGameState(Board board){
 }
 
 
-// Returns the value the enemy piece that claim a square
-// int evaluatePieceSquare(Board board, int square, int player){
-//     int score = 0;
-
-//     if (player == -1){
-//         for (int piece = 6; piece < 12; piece++) {
-//             if(piece == BLACK_KNIGHTS) continue;
-//             if (IS_BIT_SET(board->bitboards[piece], square)) {
-//                 score += pieceValues[piece];
-//             }
-//         }
-//     } else if(player == 1){ 
-//         for (int piece = 0; piece < 6; piece++) {
-//             if(piece == WHITE_KNIGHTS) continue;
-//             if (IS_BIT_SET(board->bitboards[piece], square)) {
-//                 score -= pieceValues[piece];
-//             }
-//         }
-//     }  
-//     return score;
-// }
-
 // Function that returns the first vertical or horizontal square that is occupied by a piece
+// in the given direction from the square.
 // Returns -1 if no piece is found in that direction
 int getSquare(Board board, int square, int direction){
     int Square = square + direction;
@@ -364,8 +354,9 @@ int getSquare(Board board, int square, int direction){
     return -1;
 }
 
-// Function that returns the value of knights that threaten a square 
-// A knight on a best case scenario claims 8 possible squares
+
+// Function that returns the value of knights that threaten or support a square 
+// A knight claims at most 8 squares at any given time
 int getKnightEncounter(Board board, int square, int player){
     int threats = 0;
 
@@ -378,6 +369,7 @@ int getKnightEncounter(Board board, int square, int player){
 
     return threats;
 }
+
 
 // Function that returns the total score of the threats on the board
 int getThreats(Board board){
@@ -401,6 +393,7 @@ int getThreats(Board board){
     return score;
 }
 
+
 // Function that calculates the value of the pieces that guard a square
 int getDefenders(Board board){
     int score = 0;
@@ -423,6 +416,7 @@ int getDefenders(Board board){
     return score;
 }
 
+
 // Function that calculates the value of the pieces that attack a square
 // And defends the square along with the value of the piece on it
 int evaluateSquare(Board board){
@@ -433,6 +427,7 @@ int evaluateSquare(Board board){
 
     return score;
 }
+
 
 // Evaluate the board score from the perspective of the current player
 int evaluateBitboard(Board board) {
