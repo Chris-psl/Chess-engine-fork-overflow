@@ -2,6 +2,7 @@
 
 ## Where our implementation is located (don't change)
 SRCDIR = src
+INCLUDE = include
 ## List all files you want to be part of your engine below
 ## (Okay to add more files)
 SOURCES = \
@@ -20,7 +21,7 @@ SOURCES = \
 CC = gcc
 
 ## Compiler flags
-CFLAGS = -Wall -Wextra -Werror -pedantic
+CFLAGS = -Wall -Wextra -Werror -pedantic -I$(INCLUDE)
 
 ## Where to put the object files
 BINDIR ?= build
@@ -38,7 +39,7 @@ WEB_TARGET ?= engine.wasm
 EMCC = emcc
 
 ## Emscripten flags
-EMCC_FLAGS = -s WASM=1 -s EXPORTED_FUNCTIONS='["_choose_move"]' --no-entry -O3
+EMCC_FLAGS = -s WASM=1 -s EXPORTED_FUNCTIONS='["_choose_move"]' --no-entry -O3 -I$(INCLUDE)
 
 ## Create the build directory if it doesn't exist
 $(BINDIR):
