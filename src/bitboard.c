@@ -19,6 +19,8 @@ parameters: board, a pointer of type Board to a board struct, and
 *fen, a pointer to a character, which represents the program's first
 argument, the FEN board data.
 
+active player is set to 'w' if the character is not 'b'
+
 return: 0 if successful, ERROR_CODE otherwise.
 */
 int parseFenRec(Board board, char *fen) {

@@ -7,6 +7,10 @@
 #include "init.h"
 #include "evaluate.h"
 
+/*
+Active player == 1 for 'w' and -1 for 'b'.
+*/
+
 // Piece values
 int pieceValues[12] = {P_VALUE, N_VALUE, B_VALUE, R_VALUE, Q_VALUE, K_VALUE, -P_VALUE, -N_VALUE, -B_VALUE, -R_VALUE, -Q_VALUE, -K_VALUE};
 
@@ -89,7 +93,7 @@ const int king_table_endgame[64] = {
 };
 
 // returns piece index or -1 if the square is empty
-// returns piece index or -1 if the square is empty
+// Else return the index of the piece (0-11 in this case)
 int whatPiece(unsigned long long bitboards[12], short int sqr) {
     int piece;
 
@@ -137,66 +141,87 @@ int evaluateMaterial(Board board){
 }
 
 // Evaluate the position based on piece-square tables
-int evaluatePosition(Board board, int gameState){
-    int player = (board->toMove == 'w') ? 1 : -1;
+// int evaluatePosition(Board board, int gameState){
+//     int player = (board->toMove == 'w') ? 1 : -1;
+//     int score = 0;
+
+//     // Piece-square tables
+//     for (int square = 63; square > -1; square--) {
+//         if (IS_BIT_SET(board->bitboards[WHITE_PAWNS], square)) {
+//             score += pawn_table[square];
+//         }
+//         if (IS_BIT_SET(board->bitboards[BLACK_PAWNS], square)) {
+//             score -= pawn_table[63 - square]; // Flip for black
+//         }
+
+//         if (IS_BIT_SET(board->bitboards[WHITE_KNIGHTS], square)) {
+//             score += knight_table[square];
+//         }
+//         if (IS_BIT_SET(board->bitboards[BLACK_KNIGHTS], square)) {
+//             score -= knight_table[63 - square];
+//         }
+
+//         if (IS_BIT_SET(board->bitboards[WHITE_BISHOPS], square)) {
+//             score += bishop_table[square];
+//         }
+//         if (IS_BIT_SET(board->bitboards[BLACK_BISHOPS], square)) {
+//             score -= bishop_table[63 - square];
+//         }
+
+//         if (IS_BIT_SET(board->bitboards[WHITE_ROOKS], square)) {
+//             score += rook_table[square];
+//         }
+//         if (IS_BIT_SET(board->bitboards[BLACK_ROOKS], square)) {
+//             score -= rook_table[63 - square];
+//         }
+
+//         if (IS_BIT_SET(board->bitboards[WHITE_QUEEN], square)) {
+//             score += queen_table[square];
+//         }
+//         if (IS_BIT_SET(board->bitboards[BLACK_QUEEN], square)) {
+//             score -= queen_table[63 - square];
+//         }
+
+//         if (IS_BIT_SET(board->bitboards[WHITE_KING], square)) {
+//             if(gameState == 2){ 
+//                 score += king_table_endgame[square];
+//             }else{
+//                 score += king_table[square];
+//             }
+//         }
+//         if (IS_BIT_SET(board->bitboards[BLACK_KING], square)) {
+//             if(gameState == 2){ 
+//                 score -= king_table_endgame[63 - square];
+//             }else{
+//                 score -= king_table[63 - square];
+//             }
+//         }
+//     }
+//         if(player == -1) score = -score;
+
+//         return score;
+// }
+
+int evaluatePosition(Board board, int gameState) {
     int score = 0;
 
-    // Piece-square tables
-    for (int square = 63; square > -1; square--) {
-        if (IS_BIT_SET(board->bitboards[WHITE_PAWNS], square)) {
-            score += pawn_table[square];
-        }
-        if (IS_BIT_SET(board->bitboards[BLACK_PAWNS], square)) {
-            score -= pawn_table[63 - square]; // Flip for black
-        }
+    const int* tables[6] = {
+        pawn_table, knight_table, bishop_table,
+        rook_table, queen_table,
+        (gameState == 2) ? king_table_endgame : king_table
+    };
 
-        if (IS_BIT_SET(board->bitboards[WHITE_KNIGHTS], square)) {
-            score += knight_table[square];
-        }
-        if (IS_BIT_SET(board->bitboards[BLACK_KNIGHTS], square)) {
-            score -= knight_table[63 - square];
-        }
-
-        if (IS_BIT_SET(board->bitboards[WHITE_BISHOPS], square)) {
-            score += bishop_table[square];
-        }
-        if (IS_BIT_SET(board->bitboards[BLACK_BISHOPS], square)) {
-            score -= bishop_table[63 - square];
-        }
-
-        if (IS_BIT_SET(board->bitboards[WHITE_ROOKS], square)) {
-            score += rook_table[square];
-        }
-        if (IS_BIT_SET(board->bitboards[BLACK_ROOKS], square)) {
-            score -= rook_table[63 - square];
-        }
-
-        if (IS_BIT_SET(board->bitboards[WHITE_QUEEN], square)) {
-            score += queen_table[square];
-        }
-        if (IS_BIT_SET(board->bitboards[BLACK_QUEEN], square)) {
-            score -= queen_table[63 - square];
-        }
-
-        if (IS_BIT_SET(board->bitboards[WHITE_KING], square)) {
-            if(gameState == 2){ 
-                score += king_table_endgame[square];
-            }else{
-                score += king_table[square];
-            }
-        }
-        if (IS_BIT_SET(board->bitboards[BLACK_KING], square)) {
-            if(gameState == 2){ 
-                score -= king_table_endgame[63 - square];
-            }else{
-                score -= king_table[63 - square];
-            }
+    for (int sq = 0; sq < 64; sq++) {
+        for (int i = 0; i < 6; i++) {
+            if (IS_BIT_SET(board->bitboards[i], sq))
+                score += tables[i][sq];
+            if (IS_BIT_SET(board->bitboards[i + 6], sq))
+                score -= tables[i][63 - sq];  // Mirror for black
         }
     }
-        if(player == -1) score = -score;
-
-        return score;
+    return score;
 }
+
 
 // Check if a pawn is isolated
 int isBackwardPawn(unsigned long long pawnBitboard, int square, char color) {
@@ -305,28 +330,29 @@ int setGameState(Board board){
 
 
 // Returns the value the enemy piece that claim a square
-int evaluatePieceSquare(Board board, int square, int player){
-    int score = 0;
+// int evaluatePieceSquare(Board board, int square, int player){
+//     int score = 0;
 
-    if (player == -1){
-        for (int piece = 6; piece < 12; piece++) {
-            if(piece == BLACK_KNIGHTS) continue;
-            if (IS_BIT_SET(board->bitboards[piece], square)) {
-                score += pieceValues[piece];
-            }
-        }
-    } else if(player == 1){ 
-        for (int piece = 0; piece < 6; piece++) {
-            if(piece == WHITE_KNIGHTS) continue;
-            if (IS_BIT_SET(board->bitboards[piece], square)) {
-                score -= pieceValues[piece];
-            }
-        }
-    }  
-    return score;
-}
+//     if (player == -1){
+//         for (int piece = 6; piece < 12; piece++) {
+//             if(piece == BLACK_KNIGHTS) continue;
+//             if (IS_BIT_SET(board->bitboards[piece], square)) {
+//                 score += pieceValues[piece];
+//             }
+//         }
+//     } else if(player == 1){ 
+//         for (int piece = 0; piece < 6; piece++) {
+//             if(piece == WHITE_KNIGHTS) continue;
+//             if (IS_BIT_SET(board->bitboards[piece], square)) {
+//                 score -= pieceValues[piece];
+//             }
+//         }
+//     }  
+//     return score;
+// }
 
 // Function that returns the first vertical or horizontal square that is occupied by a piece
+// Returns -1 if no piece is found in that direction
 int getSquare(Board board, int square, int direction){
     int Square = square + direction;
     while (Square >= 0 && Square < 64) {
@@ -338,39 +364,39 @@ int getSquare(Board board, int square, int direction){
     return -1;
 }
 
-// Function that returns the amount of knights that threaten a square 
+// Function that returns the value of knights that threaten a square 
 // A knight on a best case scenario claims 8 possible squares
-int getKnightThreats(Board board, int square){
+int getKnightEncounter(Board board, int square, int player){
     int threats = 0;
-    int player = (board->toMove == 'w') ? 1 : -1;
 
     int directions[8] = {6, 10, 15, 17, -6, -10, -15, -17};
     for(int i = 0; i < 8; i++){
         if(whatPiece(board->bitboards, square + directions[i]) == player * WHITE_KNIGHTS){
-            threats++;
+            threats += player * WHITE_KNIGHTS;
         }
     }
 
     return threats;
 }
 
-// Function that returns the value of the vertical and horizontal threats to a square
+// Function that returns the total score of the threats on the board
 int getThreats(Board board){
     int score = 0;
+    int enemyPlayer = (board->toMove == 'w') ? -1 : 1;
     int knightThreats = 0;
     int directions[8] = {1, -1, 8, -8, 7, -7, 9, -9};
 
     for (int square = 0; square < 64; square++) {
-        knightThreats = getKnightThreats(board, square);
+        knightThreats = getKnightEncounter(board, square, enemyPlayer);
         for(int i = 0; i < 8; i++){
             int Square = getSquare(board, square, directions[i]);
-            if(Square != -1){
-                score += evaluatePieceSquare(board, Square, -1);
+            if(Square != -1 && whatPiece(board->bitboards, Square) > 5 && whatPiece(board->bitboards, Square) < 12){
+                score += pieceValues[whatPiece(board->bitboards, Square)] * enemyPlayer;
             }
         }
     }
 
-    score -= knightThreats*10;
+    score += knightThreats;
 
     return score;
 }
@@ -378,18 +404,21 @@ int getThreats(Board board){
 // Function that calculates the value of the pieces that guard a square
 int getDefenders(Board board){
     int score = 0;
+    int knightSupport = 0;
     int player = (board->toMove == 'w') ? 1 : -1;
     int directions[8] = {1, -1, 8, -8, 7, -7, 9, -9};
 
     for (int square = 0; square < 64; square++) {
+        knightSupport = getKnightEncounter(board, square, player);
         for(int i = 0; i < 8; i++){
             int Square = getSquare(board, square, directions[i]);
-            if(Square != -1){
-                score += evaluatePieceSquare(board, Square, 1);
+            if(Square != -1 && whatPiece(board->bitboards, Square) > -1 && whatPiece(board->bitboards, Square) < 6){
+                score += pieceValues[whatPiece(board->bitboards, Square)];
             }
         }
-        score += evaluatePieceSquare(board, square, player);
     }
+
+    score += knightSupport;
 
     return score;
 }
@@ -422,7 +451,9 @@ int evaluateBitboard(Board board) {
     score += evaluatePawnStructures(board);
     
     // Attacked squares penalty currently working on it
-    //score += evaluateSquare(board);
+    score += evaluateSquare(board);
+
+    if (board->toMove == 'b') score = -score; // Negate the score for black
 
     return score;
 }

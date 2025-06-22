@@ -9,7 +9,7 @@
 #define EXIT_SUCCESS 0
 #define EXIT_FAILURE 1
 #define ERROR_CODE -1
-#define DEBUG 0 // turn 1 for debug prints
+#define DEBUG 1 // turn 1 for debug prints
 
 // Setting a bit (placing a piece)
 #define SET_BIT(bitboard, square) ((bitboard) |= (1ULL << (square)))

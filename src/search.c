@@ -68,6 +68,9 @@ double quiescence(Board board, double alpha, double beta) {
             UpdateBitboards(newBoard, moves[i]);
 
             // Recursive quiescence search
+            newBoard->toMove = (newBoard->toMove == 'w') ? 'b' : 'w'; // Switch player
+            debugPrint("tomove: %c\n", newBoard->toMove);
+            
             double eval = -quiescence(newBoard, -beta, -alpha);
             free(newBoard); // Free allocated board
 
@@ -89,6 +92,8 @@ double quiescence(Board board, double alpha, double beta) {
 
 
 // Minimax function with alpha-beta pruning and quiescence search
+// Expects positive eval from the maximizing player's perspective
+// and negative eval from the minimizing player's perspective
 double minimax(Board board, int depth, double alpha, double beta, bool maximizingPlayer) {
 
     if(!board) return 0;
@@ -132,7 +137,7 @@ double minimax(Board board, int depth, double alpha, double beta, bool maximizin
         // Apply a move
         UpdateBitboards(newBoard, moves[i]);
         newBoard->toMove = (newBoard->toMove == 'w') ? 'b' : 'w'; // Switch player
-        debugPrint("tomoce: %c\n", newBoard->toMove);
+        debugPrint("tomove: %c\n", newBoard->toMove);
         
         double eval = minimax(newBoard, depth - 1, alpha, beta, !maximizingPlayer);
         free(newBoard); // Free the allocated board
